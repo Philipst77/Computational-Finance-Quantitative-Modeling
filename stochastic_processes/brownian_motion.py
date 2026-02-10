@@ -1,103 +1,75 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  
+import plotly.graph_objects as go
+from pathlib import Path
 
-def simulate_brownian_motion(T: float, N: int, n_paths: int, seed: int | None = 0):
-    """
-    Simulate Brownian motion paths W(t).
+# ---- DIRECTORIES ----
+BASE_DIR = Path(__file__).parent
+FIG_DIR = BASE_DIR / "figures" / "brownian"
+FIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    Parameters
-    ----------
-    T : float
-        Total time (e.g. 1.0)
-    N : int
-        Number of time steps
-    n_paths : int
-        Number of simulated paths
-    seed : int or None
-        Random seed for reproducibility
 
-    Returns
-    -------
-    t : ndarray, shape (N+1,)
-        Time grid
-    W : ndarray, shape (n_paths, N+1)
-        Brownian motion paths
-    """
-    if T <= 0:
-        raise ValueError("T must be positive")
-    if N <= 0:
-        raise ValueError("N must be positive")
-    if n_paths <= 0:
-        raise ValueError("n_paths must be positive")
-
+def simulate_brownian_motion(T, N, n_paths, seed=42):
     rng = np.random.default_rng(seed)
     dt = T / N
+    t = np.linspace(0, T, N + 1)
 
-    # Step 1: generate standard normal noise
     Z = rng.standard_normal((n_paths, N))
-
-    # Step 2: scale by sqrt(dt)
     dW = np.sqrt(dt) * Z
 
-    # Step 3: cumulative sum to build paths
     W = np.zeros((n_paths, N + 1))
     W[:, 1:] = np.cumsum(dW, axis=1)
-
-    # Time grid
-    t = np.linspace(0.0, T, N + 1)
 
     return t, W
 
 
-def main():
-    # Parameters
-    T = 1.0
-    N = 500
-    n_paths = 20
-    dt = T / N
-    t = np.linspace(0, T, N + 1)
+def save_brownian_plots(t, W):
+    n_paths = W.shape[0]
 
-    np.random.seed(42)
-    dW = np.sqrt(dt) * np.random.randn(n_paths, N + 1)
-    W = np.cumsum(dW, axis=1)
+    # ---- STATIC PNG (for README) ----
+    plt.figure(figsize=(10, 6))
+    for i in range(n_paths):
+        plt.plot(t, W[i], alpha=0.7)
 
-    # ---- FIGURE SETUP ----
-    fig = plt.figure(figsize=(11, 7))
-    fig.patch.set_facecolor((0.75, 0.75, 0.75))  # medium gray background
+    plt.title("Brownian Motion Paths (2D)")
+    plt.xlabel("Time")
+    plt.ylabel("W(t)")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(FIG_DIR / "brownian_motion_2d.png", dpi=300)
+    plt.close()
 
-    ax = fig.add_subplot(111, projection="3d")
-    ax.set_facecolor((0.85, 0.85, 0.85, 0.85))  # lighter gray, glassy look
-
-    # Glass-like transparent panes
-    for axis in [ax.xaxis, ax.yaxis, ax.zaxis]:
-        axis.pane.set_facecolor((1, 1, 1, 0.25))
-        axis.pane.set_edgecolor("gray")
-
-    # ---- PLOT PATHS ----
-    colors = plt.cm.plasma(np.linspace(0, 1, n_paths))
+    # ---- INTERACTIVE 3D (ROTATABLE HTML) ----
+    fig = go.Figure()
 
     for i in range(n_paths):
-        ax.plot(
-            t,
-            np.full(N + 1, i),
-            W[i],
-            color=colors[i],
-            linewidth=1.2,
-            alpha=0.95,
+        fig.add_trace(
+            go.Scatter3d(
+                x=t,
+                y=[i] * len(t),
+                z=W[i],
+                mode="lines",
+                line=dict(width=4),
+            )
         )
 
-    # ---- LABELS ----
-    ax.set_title("3D Brownian Motion Paths", fontsize=15, pad=18)
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Path Index")
-    ax.set_zlabel("W(t)")
+    fig.update_layout(
+        title="3D Brownian Motion Paths",
+        scene=dict(
+            xaxis_title="Time",
+            yaxis_title="Path Index",
+            zaxis_title="W(t)",
+            bgcolor="rgba(200,200,200,0.85)",
+        ),
+        paper_bgcolor="rgba(200,200,200,1)",
+    )
 
-    # Subtle grid
-    ax.grid(True, alpha=0.35)
+    fig.write_html(FIG_DIR / "brownian_motion_3d.html")
 
-    plt.tight_layout()
-    plt.show()
+
+def main():
+    t, W = simulate_brownian_motion(T=1.0, N=500, n_paths=20)
+    save_brownian_plots(t, W)
 
 
 if __name__ == "__main__":
