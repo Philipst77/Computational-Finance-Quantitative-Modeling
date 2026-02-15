@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: quant_finance
+Version: 0.1.0
+Summary: Computational Finance Quantitative Modeling Library
+Author: Philip Stavrev
+Requires-Dist: numpy
+Requires-Dist: matplotlib
