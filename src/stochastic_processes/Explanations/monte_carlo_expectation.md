@@ -1,4 +1,4 @@
-# Monte Carlo Expectation and Its Role in Financial Modeling
+vo# Monte Carlo Expectation and Its Role in Financial Modeling
 
 Monte Carlo expectation is a numerical method used to compute expected values in the presence of uncertainty. While stochastic processes like Brownian motion and Geometric Brownian Motion describe how randomness evolves over time, Monte Carlo methods answer a different question: given many possible future scenarios, what is the average outcome we care about?
 
